@@ -11,6 +11,11 @@ from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
 from sklearn.cluster import KMeans
 from sklearn.metrics.pairwise import cosine_similarity
 from keybert import KeyBERT
+from pydantic import BaseModel
+from passlib.context import CryptContext
+from dotenv import load_dotenv
+
+load_dotenv()
 
 import numpy as np
 import requests
@@ -19,7 +24,29 @@ import os
 
 app = FastAPI()
 
+# Pydantic models for request validation
+class UserBase(BaseModel):
+    email: str
+    password: str
+    name: str
+
+class TeacherCreate(UserBase):
+    subject: str
+    
+class StudentCreate(UserBase):
+    grade: str
+
+class UserLogin(BaseModel):
+    email: str 
+    password: str
+
+# Password hashing
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
 # Initialize Neo4j Graph
+print("NEO4J_URI:", os.getenv("NEO4J_URI"))
+print("NEO4J_USERNAME:", os.getenv("NEO4J_USERNAME")) 
+print("NEO4J_PASSWORD:", os.getenv("NEO4J_PASSWORD"))
 graph = Neo4jGraph(url=os.getenv("NEO4J_URI"), username=os.getenv("NEO4J_USERNAME"), password=os.getenv("NEO4J_PASSWORD"))
 
 # Initialize Mistral tokenizer and model
@@ -32,6 +59,107 @@ graph = Neo4jGraph(url=os.getenv("NEO4J_URI"), username=os.getenv("NEO4J_USERNAM
 
 # Create a text-generation pipeline
 # pipe = pipeline("text-generation", model=model, tokenizer=tokenizer)
+
+
+
+
+@app.post("/signup/teacher")
+def create_teacher(teacher: TeacherCreate):
+    # Check if email already exists
+    query = """
+    MATCH (t:Teacher {email: $email})
+    RETURN t
+    """
+    result = graph.query(query, {"email": teacher.email})
+    if result:
+        raise HTTPException(status_code=400, detail="Email already registered")
+        
+    # Hash password
+    hashed_password = pwd_context.hash(teacher.password)
+    
+    # Create teacher node
+    query = """
+    CREATE (t:Teacher {
+        email: $email,
+        password: $password,
+        name: $name,
+        subject: $subject
+    })
+    RETURN t
+    """
+    graph.query(query, {
+        "email": teacher.email,
+        "password": hashed_password,
+        "name": teacher.name,
+        "subject": teacher.subject
+    })
+    return {"message": "Teacher created successfully"}
+
+@app.post("/signup/student") 
+def create_student(student: StudentCreate):
+    # Check if email already exists
+    query = """
+    MATCH (s:Student {email: $email})
+    RETURN s
+    """
+    result = graph.query(query, {"email": student.email})
+    if result:
+        raise HTTPException(status_code=400, detail="Email already registered")
+
+    # Hash password
+    hashed_password = pwd_context.hash(student.password)
+    
+    # Create student node
+    query = """
+    CREATE (s:Student {
+        email: $email,
+        password: $password,
+        name: $name,
+        grade: $grade
+    })
+    RETURN s
+    """
+    graph.query(query, {
+        "email": student.email,
+        "password": hashed_password,
+        "name": student.name,
+        "grade": student.grade
+    })
+    return {"message": "Student created successfully"}
+
+@app.post("/login/teacher")
+def login_teacher(user: UserLogin):
+    query = """
+    MATCH (t:Teacher {email: $email})
+    RETURN t
+    """
+    result = graph.query(query, {"email": user.email})
+    if not result:
+        raise HTTPException(status_code=400, detail="Teacher not found")
+        
+    teacher = result[0]["t"]
+    if not pwd_context.verify(user.password, teacher["password"]):
+        raise HTTPException(status_code=400, detail="Incorrect password")
+        
+    return {"message": "Login successful"}
+
+@app.post("/login/student")
+def login_student(user: UserLogin):
+    query = """
+    MATCH (s:Student {email: $email})
+    RETURN s
+    """
+    result = graph.query(query, {"email": user.email})
+    if not result:
+        raise HTTPException(status_code=400, detail="Student not found")
+        
+    student = result[0]["s"]
+    if not pwd_context.verify(user.password, student["password"]):
+        raise HTTPException(status_code=400, detail="Incorrect password")
+        
+    return {"message": "Login successful"}
+
+
 
 # Load and Split Documents
 def load_and_split_documents(file_path: str):
