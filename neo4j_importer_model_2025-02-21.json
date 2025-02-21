@@ -1,0 +1,600 @@
+{
+  "version": "2.3.1-beta.0",
+  "visualisation": {
+    "nodes": [
+      {
+        "id": "n:1",
+        "position": {
+          "x": -10.109665227135462,
+          "y": 18.775092564680147
+        }
+      },
+      {
+        "id": "n:2",
+        "position": {
+          "x": -6.221857267998318,
+          "y": -138.90373863754658
+        }
+      },
+      {
+        "id": "n:3",
+        "position": {
+          "x": 245.16673051827306,
+          "y": -136.5655740246956
+        }
+      },
+      {
+        "id": "n:4",
+        "position": {
+          "x": 119.13314892480975,
+          "y": 170.81098444275145
+        }
+      },
+      {
+        "id": "n:5",
+        "position": {
+          "x": 232.82646116759906,
+          "y": 80.62042058025209
+        }
+      },
+      {
+        "id": "n:6",
+        "position": {
+          "x": -139.9921692568605,
+          "y": 165.42897503122578
+        }
+      },
+      {
+        "id": "n:7",
+        "position": {
+          "x": -17.77576038472456,
+          "y": 243.01634003424556
+        }
+      },
+      {
+        "id": "n:8",
+        "position": {
+          "x": -137.35692628049955,
+          "y": 64.50506905407809
+        }
+      },
+      {
+        "id": "n:9",
+        "position": {
+          "x": 125.14002550538363,
+          "y": -138.42095369523298
+        }
+      }
+    ]
+  },
+  "dataModel": {
+    "version": "2.3.1-beta.0",
+    "graphSchemaRepresentation": {
+      "version": "1.0.0",
+      "graphSchema": {
+        "nodeLabels": [
+          {
+            "$id": "nl:1",
+            "token": "Teacher",
+            "properties": [
+              {
+                "$id": "p:1",
+                "token": "Name",
+                "type": {
+                  "type": "string"
+                },
+                "nullable": true
+              },
+              {
+                "$id": "p:2",
+                "token": "School",
+                "type": {
+                  "type": "string"
+                },
+                "nullable": true
+              }
+            ]
+          },
+          {
+            "$id": "nl:2",
+            "token": "Notes",
+            "properties": [
+              {
+                "$id": "p:3",
+                "token": "Subject",
+                "type": {
+                  "type": "string"
+                },
+                "nullable": true
+              },
+              {
+                "$id": "p:4",
+                "token": "Topic",
+                "type": {
+                  "type": "string"
+                },
+                "nullable": true
+              }
+            ]
+          },
+          {
+            "$id": "nl:3",
+            "token": "RAG_Node",
+            "properties": [
+              {
+                "$id": "p:5",
+                "token": "text_chunk",
+                "type": {
+                  "type": "string"
+                },
+                "nullable": true
+              },
+              {
+                "$id": "p:6",
+                "token": "embeddings",
+                "type": {
+                  "type": "string"
+                },
+                "nullable": true
+              }
+            ]
+          },
+          {
+            "$id": "nl:4",
+            "token": "Assignment",
+            "properties": [
+              {
+                "$id": "p:7",
+                "token": "topics",
+                "type": {
+                  "type": "string"
+                },
+                "nullable": true
+              },
+              {
+                "$id": "p:8",
+                "token": "note_topics",
+                "type": {
+                  "type": "string"
+                },
+                "nullable": true
+              }
+            ]
+          },
+          {
+            "$id": "nl:5",
+            "token": "Question",
+            "properties": [
+              {
+                "$id": "p:9",
+                "token": "question",
+                "type": {
+                  "type": "string"
+                },
+                "nullable": true
+              },
+              {
+                "$id": "p:10",
+                "token": "score",
+                "type": {
+                  "type": "string"
+                },
+                "nullable": true
+              }
+            ]
+          },
+          {
+            "$id": "nl:6",
+            "token": "Student",
+            "properties": [
+              {
+                "$id": "p:11",
+                "token": "name",
+                "type": {
+                  "type": "string"
+                },
+                "nullable": true
+              },
+              {
+                "$id": "p:12",
+                "token": "grade",
+                "type": {
+                  "type": "string"
+                },
+                "nullable": true
+              }
+            ]
+          },
+          {
+            "$id": "nl:7",
+            "token": "Assignment_Report",
+            "properties": [
+              {
+                "$id": "p:13",
+                "token": "assignment_id",
+                "type": {
+                  "type": "string"
+                },
+                "nullable": true
+              },
+              {
+                "$id": "p:14",
+                "token": "question",
+                "type": {
+                  "type": "string"
+                },
+                "nullable": true
+              },
+              {
+                "$id": "p:15",
+                "token": "query_type",
+                "type": {
+                  "type": "string"
+                },
+                "nullable": true
+              },
+              {
+                "$id": "p:16",
+                "token": "query",
+                "type": {
+                  "type": "string"
+                },
+                "nullable": true
+              },
+              {
+                "$id": "p:17",
+                "token": "student_id",
+                "type": {
+                  "type": "string"
+                },
+                "nullable": true
+              }
+            ]
+          },
+          {
+            "$id": "nl:8",
+            "token": "Class",
+            "properties": [
+              {
+                "$id": "p:20",
+                "token": "grade",
+                "type": {
+                  "type": "string"
+                },
+                "nullable": true
+              },
+              {
+                "$id": "p:21",
+                "token": "section",
+                "type": {
+                  "type": "string"
+                },
+                "nullable": true
+              }
+            ]
+          },
+          {
+            "$id": "nl:9",
+            "token": "Concept",
+            "properties": []
+          }
+        ],
+        "relationshipTypes": [
+          {
+            "$id": "rt:1",
+            "token": "UPLOADED",
+            "properties": []
+          },
+          {
+            "$id": "rt:4",
+            "token": "",
+            "properties": []
+          },
+          {
+            "$id": "rt:5",
+            "token": "",
+            "properties": []
+          },
+          {
+            "$id": "rt:6",
+            "token": "ASSIGNED",
+            "properties": []
+          },
+          {
+            "$id": "rt:7",
+            "token": "STATUS",
+            "properties": [
+              {
+                "$id": "p:18",
+                "token": "in_progress",
+                "type": {
+                  "type": "boolean"
+                },
+                "nullable": true
+              },
+              {
+                "$id": "p:19",
+                "token": "completed",
+                "type": {
+                  "type": "boolean"
+                },
+                "nullable": true
+              }
+            ]
+          },
+          {
+            "$id": "rt:8",
+            "token": "",
+            "properties": []
+          },
+          {
+            "$id": "rt:9",
+            "token": "",
+            "properties": []
+          },
+          {
+            "$id": "rt:10",
+            "token": "USED",
+            "properties": []
+          },
+          {
+            "$id": "rt:11",
+            "token": "TEACH",
+            "properties": []
+          },
+          {
+            "$id": "rt:3",
+            "token": "ADMITTED",
+            "properties": []
+          },
+          {
+            "$id": "rt:2",
+            "token": "",
+            "properties": []
+          },
+          {
+            "$id": "rt:12",
+            "token": "",
+            "properties": []
+          }
+        ],
+        "nodeObjectTypes": [
+          {
+            "$id": "n:1",
+            "labels": [
+              {
+                "$ref": "#nl:1"
+              }
+            ]
+          },
+          {
+            "$id": "n:2",
+            "labels": [
+              {
+                "$ref": "#nl:2"
+              }
+            ]
+          },
+          {
+            "$id": "n:3",
+            "labels": [
+              {
+                "$ref": "#nl:3"
+              }
+            ]
+          },
+          {
+            "$id": "n:4",
+            "labels": [
+              {
+                "$ref": "#nl:4"
+              }
+            ]
+          },
+          {
+            "$id": "n:5",
+            "labels": [
+              {
+                "$ref": "#nl:5"
+              }
+            ]
+          },
+          {
+            "$id": "n:6",
+            "labels": [
+              {
+                "$ref": "#nl:6"
+              }
+            ]
+          },
+          {
+            "$id": "n:7",
+            "labels": [
+              {
+                "$ref": "#nl:7"
+              }
+            ]
+          },
+          {
+            "$id": "n:8",
+            "labels": [
+              {
+                "$ref": "#nl:8"
+              }
+            ]
+          },
+          {
+            "$id": "n:9",
+            "labels": [
+              {
+                "$ref": "#nl:9"
+              }
+            ]
+          }
+        ],
+        "relationshipObjectTypes": [
+          {
+            "$id": "r:1",
+            "type": {
+              "$ref": "#rt:1"
+            },
+            "from": {
+              "$ref": "#n:1"
+            },
+            "to": {
+              "$ref": "#n:2"
+            }
+          },
+          {
+            "$id": "r:4",
+            "type": {
+              "$ref": "#rt:4"
+            },
+            "from": {
+              "$ref": "#n:6"
+            },
+            "to": {
+              "$ref": "#n:7"
+            }
+          },
+          {
+            "$id": "r:5",
+            "type": {
+              "$ref": "#rt:5"
+            },
+            "from": {
+              "$ref": "#n:4"
+            },
+            "to": {
+              "$ref": "#n:7"
+            }
+          },
+          {
+            "$id": "r:6",
+            "type": {
+              "$ref": "#rt:6"
+            },
+            "from": {
+              "$ref": "#n:4"
+            },
+            "to": {
+              "$ref": "#n:6"
+            }
+          },
+          {
+            "$id": "r:7",
+            "type": {
+              "$ref": "#rt:7"
+            },
+            "from": {
+              "$ref": "#n:6"
+            },
+            "to": {
+              "$ref": "#n:4"
+            }
+          },
+          {
+            "$id": "r:8",
+            "type": {
+              "$ref": "#rt:8"
+            },
+            "from": {
+              "$ref": "#n:1"
+            },
+            "to": {
+              "$ref": "#n:4"
+            }
+          },
+          {
+            "$id": "r:9",
+            "type": {
+              "$ref": "#rt:9"
+            },
+            "from": {
+              "$ref": "#n:4"
+            },
+            "to": {
+              "$ref": "#n:5"
+            }
+          },
+          {
+            "$id": "r:10",
+            "type": {
+              "$ref": "#rt:10"
+            },
+            "from": {
+              "$ref": "#n:2"
+            },
+            "to": {
+              "$ref": "#n:4"
+            }
+          },
+          {
+            "$id": "r:11",
+            "type": {
+              "$ref": "#rt:11"
+            },
+            "from": {
+              "$ref": "#n:1"
+            },
+            "to": {
+              "$ref": "#n:8"
+            }
+          },
+          {
+            "$id": "r:3",
+            "type": {
+              "$ref": "#rt:3"
+            },
+            "from": {
+              "$ref": "#n:8"
+            },
+            "to": {
+              "$ref": "#n:6"
+            }
+          },
+          {
+            "$id": "r:2",
+            "type": {
+              "$ref": "#rt:2"
+            },
+            "from": {
+              "$ref": "#n:2"
+            },
+            "to": {
+              "$ref": "#n:9"
+            }
+          },
+          {
+            "$id": "r:12",
+            "type": {
+              "$ref": "#rt:12"
+            },
+            "from": {
+              "$ref": "#n:9"
+            },
+            "to": {
+              "$ref": "#n:3"
+            }
+          }
+        ],
+        "constraints": [],
+        "indexes": []
+      }
+    },
+    "graphSchemaExtensionsRepresentation": {
+      "nodeKeyProperties": []
+    },
+    "graphMappingRepresentation": {
+      "dataSourceSchema": {
+        "type": null,
+        "tableSchemas": []
+      },
+      "nodeMappings": [],
+      "relationshipMappings": []
+    },
+    "configurations": {
+      "idsToIgnore": []
+    }
+  }
+}

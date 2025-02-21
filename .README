@@ -1,0 +1,4 @@
+1. Connect to Neo4j with URI, Username, Password
+2. Import Neo4j graph model neo4j_importer_model_2025-02-21.json for reference in your neo4j
+2. Create Hugging Face Write Access Token and run huggingface-cli login to add the access token.
+3. Get JINA API from https://jina.ai/embeddings/
