@@ -20,18 +20,7 @@ import os
 app = FastAPI()
 
 # Initialize Neo4j Graph
-graph = Neo4jGraph(url=os.getenv("NEO4J_URI"), username=os.getenv("NEO4J_USERNAME"), password=os.getenv("NEO4J_PASSWORD"))
-
-# Initialize Mistral tokenizer and model
-# tokenizer = AutoTokenizer.from_pretrained("mistralai/Mistral-Small-24B-Base-2501")
-# model = AutoModelForCausalLM.from_pretrained("mistralai/Mistral-Small-24B-Base-2501")
-# Notes Cached the mode with local_files_only : If already downloaded the model once, it will be cached locally. Cache in ~/.cache/huggingface/transformers
-# Initialize tokenizer and model
-# tokenizer = AutoTokenizer.from_pretrained("deepseek-ai/DeepSeek-R1", trust_remote_code=True)
-# model = AutoModelForCausalLM.from_pretrained("deepseek-ai/DeepSeek-R1", trust_remote_code=True)
-
-# Create a text-generation pipeline
-# pipe = pipeline("text-generation", model=model, tokenizer=tokenizer)
+graph = Neo4jGraph(url="neo4j+s://c218b7a1.databases.neo4j.io", username="neo4j", password="2SPEIpuOjK707g1XKNwS5gdzIFlE3hWPJ7e9LnEZJds")
 
 # Load and Split Documents
 def load_and_split_documents(file_path: str):
@@ -49,15 +38,16 @@ def load_and_split_documents(file_path: str):
         raw_text = '\n'.join(para.text for para in doc.paragraphs)
     else:
         raise ValueError("Unsupported file format")
+    text = raw_text.replace(". ", ".\n")  # Add newline after full stop and space
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=512,  
         chunk_overlap=24,  
-        separators=["\n\n", "\n", " ", ""]  # Split by paragraphs, sentences, and words
+        separators=["\n"]  # Split by newline
     )
     # text_splitter = TokenTextSplitter(chunk_size=512, chunk_overlap=24)
     # return text_splitter.split_documents(raw_documents[:1])
     print('Reached split text')
-    return text_splitter.split_text(raw_text)
+    return text_splitter.split_text(text)
 
 def create_embeddings(text: str):
     print('Reached create embeddings')
@@ -65,7 +55,7 @@ def create_embeddings(text: str):
     url = 'https://api.jina.ai/v1/embeddings'
     headers = {
     'Content-Type': 'application/json',
-    'Authorization': f"Bearer {os.getenv('JINA_API')}"
+    'Authorization': "Bearer jina_8cd60dc22e1b48d286009a83e4ec4dabCR5DpWxTbrsjgQ7u8_4ikwLNq3dZ"
     }
     data = {
         "model": "jina-clip-v2",
@@ -136,15 +126,34 @@ def create_hierarchical_structure(embeddings: list, concepts: dict):
     # Connect chunks to higher-level concepts
     for concept, keywords in concepts.items():
         query = """
-        CREATE (c:Concept {name: $name})
-        WITH c
-        UNWIND $keywords AS keyword
-        MATCH (n:RAG_Node)
-        WHERE n.text_chunk CONTAINS keyword
-        CREATE (n)-[r:PART_OF]->(c)
+            CREATE (c:Concept {name: $name})
+            WITH c
+            UNWIND $keywords AS keyword
+            MATCH (n:RAG_Node)
+            WHERE n.text_chunk CONTAINS keyword
+            CREATE (n)-[r:PART_OF]->(c)
+            RETURN r
+            """
+        graph.query(query, {"name": concept, "keywords": keywords})
+
+def create_notes_node(subject: str, topic: str):
+    query = """
+    CREATE (n:Notes {subject: $subject, topic: $topic})
+    RETURN n
+    """
+    result = graph.query(query, {"subject": subject, "topic": topic})
+    return result[0]["n"]
+
+def connect_concepts_to_notes(notes_node, concepts: list):
+    query = """
+        MATCH (n:Notes {subject: $subject, topic: $topic})
+        WITH n
+        UNWIND $concepts AS concept
+        MATCH (c:Concept {name: concept})
+        CREATE (c)-[r:PART_OF]->(n)
         RETURN r
         """
-        graph.query(query, {"name": concept, "keywords": keywords})
+    graph.query(query, {"subject": notes_node["subject"], "topic": notes_node["topic"], "concepts": concepts})
 
 def fetch_relevant_nodes(question: str, top_k: int = 3):
     print('Reached Fetch Relevant Nodes')
@@ -173,43 +182,64 @@ def fetch_relevant_nodes(question: str, top_k: int = 3):
     """
     concept_results = graph.query(concept_query)
     
-    # Calculate cosine similarity for concepts (if needed)
-    # (You can use the same approach as above if concepts have embeddings)
-    
     return relevant_rag_results, concept_results
 
-API_URL = "https://api-inference.huggingface.co/models/NousResearch/DeepHermes-3-Llama-3-8B-Preview"
-headers = {"Authorization": f"Bearer {os.getenv('HUGGING_FACE_ACESS_TOKEN')}"}
+def get_all_notes():
+    query = """
+    MATCH (n:Notes)
+    RETURN elementId(n) AS id, n.subject AS subject, n.topic AS topic
+    """
+    result = graph.query(query)
+    return [{"id": record["id"], "subject": record["subject"], "topic": record["topic"]} for record in result]
 
-# def generate_answer(question: str, context: str):
-#     # Combine question and context
-#     input_text = f"Context: {context}\n\nQuestion: {question}\n\nAnswer:"
-    
-#     # Send request to Hugging Face Inference API
-#     # payload = {"inputs": input_text}
-#     response = requests.post(API_URL, headers=headers, json={"inputs": input_text})
-    
-#     # Check for errors
-#     if response.status_code != 200:
-#         raise Exception(f"API request failed: {response.text}")
-    
-#     # Extract and return the answer
-#     answer = response.json()[0]["generated_text"]
-#     return answer
+def get_rag_text_chunks_for_note(note_id: str):
+    query = """
+    MATCH (n:Notes)-[:PART_OF]-(c:Concept)-[:PART_OF]-(r:RAG_Node)
+    WHERE elementId(n) = $note_id
+    RETURN r.text_chunk AS text_chunk
+    ORDER BY r.text_chunk ASC
+    """
+    result = graph.query(query, {"note_id": note_id})
+    return [record["text_chunk"] for record in result]
 
-pipe = pipeline("text-generation", model="gpt2", device_map="cpu")
+def get_text_chunks_grouped_by_concept(note_id: str):
+    query = """
+    MATCH (n:Notes)-[:PART_OF]-(c:Concept)-[:PART_OF]-(r:RAG_Node)
+    WHERE elementId(n) = $note_id
+    RETURN c.name AS concept, collect(r.text_chunk) AS text_chunks
+    """
+    result = graph.query(query, {"note_id": note_id})
+    return {record["concept"]: record["text_chunks"] for record in result}
+
+pipe = pipeline("text2text-generation", model="google/flan-t5-base")     
 
 def generate_answer(question: str, context: str):
     print('Reached generate answer')
     # Combine question and context
-    input_text = f"Context: {context}\n\nQuestion ---- : {question}\n\nAnswer -----:"
+    input_text = f"Take the context given below and Answer the question asked.\n\nContext: {context}\n\nQuestion: {question}"
     
     # Generate answer using the pipeline
     output = pipe(input_text, max_new_tokens=200, num_return_sequences=1)
-    print('Done with output')
-    answer = output[0]["generated_text"]
-    print('Done with answer ......... ', answer)
+    generated_text = output[0]["generated_text"]
+    # Remove the input text from the output to get only the answer
+    answer = generated_text.replace(input_text, "").strip()
     return answer
+
+larger_pipe = pipeline("text2text-generation", model="google/flan-t5-large")
+
+def generate_questions_for_concept(text_chunks: list):
+    context = " ".join(text_chunks)
+    
+    # Prompt to generate questions
+    input_text = f"Generate a distinct short questions for students based on the following notes. Separate questions with a newline:\n\nNotes: {context}"
+    
+    output = pipe(input_text, max_new_tokens=200, num_return_sequences=1)
+    generated_text = output[0]["generated_text"].strip()
+    
+    # Split the generated text into individual questions
+    questions = [q.strip() for q in generated_text.split("\n") if q.strip()]
+    
+    return questions
 
 @app.get("/")
 def read_root():
@@ -222,34 +252,55 @@ def read_root():
         create_rag_node(data, embedding)  # Create RAG_Node for each chunk
 
     # Cluster embeddings to create dynamic concepts
-    clusters = cluster_embeddings(embeddings, n_clusters=5)
+    clusters = cluster_embeddings(embeddings, n_clusters=5) #5 clusters
     create_dynamic_concepts(embeddings, clusters)
 
     # Create semantic relationships
     create_semantic_relationships(embeddings, threshold=0.8)
 
+    # Create Notes node and connect concepts
+    notes_node = create_notes_node(subject="Biology", topic="Photosynthesis")
+    concepts = [f"Concept_{i}" for i in range(5)]  # 5 concepts
+    connect_concepts_to_notes(notes_node, concepts)
+
     return {"message": "Dynamic RAG Graph created!"}
 
 @app.get("/ask")
 def ask_question():
-    question = 'What is oxidation in photosynthesis?'
+    question = 'What are photosynthetic reaction centers?' #What is photorespiration?
     # Fetch relevant nodes
-    rag_results, concept_results = fetch_relevant_nodes(question, top_k=1)
+    rag_results, concept_results = fetch_relevant_nodes(question, top_k=3)
+    # print('Fetched relevant nodes', rag_results, concept_results)
     
     # Combine context from RAG_Nodes
-    rag_context = " ".join([result["text"] for result in rag_results])
-    print('Rag context done...')
-    # Combine context from Concepts
-    concept_context = " ".join([f"{result['name']}: {', '.join(result['keywords'])}" for result in concept_results])
-    print('Rag concept context...')
-    # Full context
-    context = f"{rag_context}\n{concept_context}"
-    print('Context...')
-    # Generate answer using Mistral
-    answer = generate_answer(question, context)
-    print('Question ====> ', question, '\nAnswer ====> ', answer)
+    rag_context = " ".join(result["text"].strip().replace("\n", " ") for result in rag_results)
+    # print('RAG Context ====> ', rag_context)
+    
+    # Generate answer using llm
+    answer = generate_answer(question, rag_context)
+
     # Return the answer
     return {"question": question, "answer": answer}
+    # return {"message": "Question asked!"}
+
+@app.get("/generate_assignment/{note_id}")
+def generate_assignment(note_id: str):
+    # Get text chunks grouped by concept
+    concept_to_text_chunks = get_text_chunks_grouped_by_concept(note_id)
+    
+    # Generate 2 questions per concept
+    assignment_questions = {}
+    for concept, text_chunks in concept_to_text_chunks.items():
+        questions = generate_questions_for_concept(text_chunks)
+        assignment_questions[concept] = questions
+    
+    return {"note_id": note_id, "assignment_questions": assignment_questions}
+
+@app.get("/notes")
+def get_notes():
+    # Fetch all Notes nodes
+    notes = get_all_notes()
+    return {"notes": notes}
 
 if __name__ == "__main__":
     import uvicorn
