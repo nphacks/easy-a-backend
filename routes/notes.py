@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Form, File, UploadFile
+from fastapi import APIRouter, Form, File, UploadFile, Body
 from utils.rag import fetch_relevant_nodes, load_and_split_documents, create_embeddings
 from utils.rag import create_rag_node, cluster_embeddings, create_dynamic_concepts
 from utils.rag import create_semantic_relationships
@@ -44,7 +44,7 @@ async def upload_file(
     return {"message": "Dynamic RAG Graph created!"}
 
 @router.get("/ask-doubt")
-def ask_question(question: str):
+def ask_question(question: str = Body(..., embed=True)):
     # question = 'What are photosynthetic reaction centers?' #What is photorespiration?
     # Fetch relevant nodes
     rag_results, concept_results = fetch_relevant_nodes(question, top_k=3)

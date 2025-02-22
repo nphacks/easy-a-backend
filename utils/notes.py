@@ -43,7 +43,13 @@ def get_text_chunks_grouped_by_concept(note_id: str):
     query = """
     MATCH (n:Notes)-[:PART_OF]-(c:Concept)-[:PART_OF]-(r:RAG_Node)
     WHERE elementId(n) = $note_id
-    RETURN c.name AS concept, collect(r.text_chunk) AS text_chunks
+    RETURN c.name AS concept, collect(r.text_chunk) AS text_chunks, n.topic AS topic
     """
     result = graph.query(query, {"note_id": note_id})
-    return {record["concept"]: record["text_chunks"] for record in result}
+    if not result:
+        return {}, ""
+    
+    topic = result[0]["topic"]
+    concept_to_text_chunks = {record["concept"]: record["text_chunks"] for record in result}
+    
+    return concept_to_text_chunks, topic

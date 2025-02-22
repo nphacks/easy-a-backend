@@ -2,7 +2,7 @@ from fastapi import APIRouter, UploadFile, File
 from passlib.context import CryptContext
 from db.database import graph
 from io import StringIO
-
+from utils.classes import create_class_and_link_to_teacher
 import csv
 
 router = APIRouter()
@@ -34,7 +34,7 @@ async def upload_class_list(file: UploadFile = File(...)):
                       s.grade = 'Unassigned'
         RETURN s
         """
-        graph.query(student_query, {
+        result = graph.query(student_query, {
             "student_email": student_email,
             "default_password": pwd_context.hash("changeme"),
             "student_name": name
@@ -42,24 +42,34 @@ async def upload_class_list(file: UploadFile = File(...)):
         
         # Create or find class node
         class_query = """
-        MERGE (c:Class {name: $class_name})
-        RETURN c
+            MERGE (c:Class {class_name: $class_name})
+            RETURN c
         """
-        graph.query(class_query, {"class_name": class_name})
+        result2 = graph.query(class_query, {"class_name": class_name})
         
         # Link student to class
         link_query = """
-        MATCH (s:Student {email: $student_email})
-        MATCH (c:Class {name: $class_name})
-        MERGE (s)-[:ENROLLED_IN]->(c)
+            MATCH (s:Student {email: $student_email})
+            MATCH (c:Class {class_name: $class_name})
+            MERGE (s)-[:ENROLLED_IN]->(c)
+            RETURN s, c
         """
-        graph.query(link_query, {
+        last = graph.query(link_query, {
             "student_email": student_email,
             "class_name": class_name
         })
-
+        print(last)
     return {"message": "Class list uploaded successfully"}
 
+@router.post("/create-class/{teacher_id}/{class_name}/{grade}/{section}")
+def create_class(
+    teacher_id: str, 
+    class_name: str,
+    grade: str, 
+    section: str
+):
+    class_node = create_class_and_link_to_teacher(teacher_id, class_name, grade, section)
+    return {"message": "Class created successfully", "class_id": class_node["id"]}
 
 """
 Example CSV format (students.csv):

@@ -11,12 +11,13 @@ class TeacherCreate(UserBase):
     school: str
     
 class StudentCreate(UserBase):
-    grade: str
+    school: str
 
 class UserLogin(BaseModel):
     email: str 
     password: str
 
 class AssignmentQuestion(BaseModel):
+    topic: str
     question: str
     score: str

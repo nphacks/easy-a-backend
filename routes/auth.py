@@ -61,7 +61,7 @@ def create_student(student: StudentCreate):
         email: $email,
         password: $password,
         name: $name,
-        grade: $grade
+        school: $school
     })
     RETURN s
     """
@@ -69,7 +69,7 @@ def create_student(student: StudentCreate):
         "email": student.email,
         "password": hashed_password,
         "name": student.name,
-        "grade": student.grade
+        "school": student.school
     })
     return {"message": "Student created successfully"}
 
