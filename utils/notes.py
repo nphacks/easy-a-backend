@@ -1,11 +1,12 @@
 from db.database import graph
 
-def get_all_notes():
+def get_all_notes(teacher_id: str):
     query = """
-    MATCH (n:Notes)
+    MATCH (t:Teacher)-[:UPLOADED]->(n:Notes)
+    WHERE elementId(t) = $teacher_id
     RETURN elementId(n) AS id, n.subject AS subject, n.topic AS topic
     """
-    result = graph.query(query)
+    result = graph.query(query, {"teacher_id": teacher_id})
     return [{"id": record["id"], "subject": record["subject"], "topic": record["topic"]} for record in result]
 
 def create_notes_node(subject: str, topic: str, teacher_id: str):

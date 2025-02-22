@@ -4,13 +4,14 @@ from utils.rag import create_rag_node, cluster_embeddings, create_dynamic_concep
 from utils.rag import create_semantic_relationships
 from utils.notes import get_all_notes, create_notes_node, connect_concepts_to_notes
 from utils.utils import generate_answer
+from utils.student import change_assignment_report
 
 router = APIRouter()
 
-@router.get("/notes")
-def get_notes():
+@router.get("/notes/{teacher_id}")
+def get_notes(teacher_id: str):
     # Fetch all Notes nodes
-    notes = get_all_notes()
+    notes = get_all_notes(teacher_id)
     return {"notes": notes}
 
 @router.post("/upload-notes")
@@ -43,20 +44,27 @@ async def upload_file(
 
     return {"message": "Dynamic RAG Graph created!"}
 
-@router.get("/ask-doubt")
-def ask_question(question: str = Body(..., embed=True)):
-    # question = 'What are photosynthetic reaction centers?' #What is photorespiration?
+@router.post("/ask-doubt")
+def ask_question(
+    question: str = Body(..., embed=True),
+    student_id: str = Body(None),
+    assignment_id: str = Body(None),
+    question_id: str = Body(None),
+    query_type: str = Body(None),
+    query_q: str = Body(None)
+):
+    # If assignment-related parameters are provided, update the assignment report
+    if student_id and assignment_id and question_id and query_type and query_q:
+        change_assignment_report(student_id, assignment_id, question_id, query_type, query_q)
+
     # Fetch relevant nodes
     rag_results, concept_results = fetch_relevant_nodes(question, top_k=3)
-    # print('Fetched relevant nodes', rag_results, concept_results)
     
     # Combine context from RAG_Nodes
     rag_context = " ".join(result["text"].strip().replace("\n", " ") for result in rag_results)
-    # print('RAG Context ====> ', rag_context)
     
     # Generate answer using llm
     answer = generate_answer(question, rag_context)
 
     # Return the answer
     return {"question": question, "answer": answer}
-    # return {"message": "Question asked!"}

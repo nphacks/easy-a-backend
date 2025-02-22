@@ -19,15 +19,26 @@ def create_assignment_in_db(teacher_id: str, title: str, questions: list[Assignm
 
 def update_assignment_question_in_db(assignment_id: str, question_id: str, updated_question: AssignmentQuestion):
     query = """
-    MATCH (a:Assignment)-[:CONTAINS]->(q:Question)
-    WHERE elementId(a) = $assignment_id AND elementId(q) = $question_id
-    SET q.question = $question, q.score = $score
+    MATCH (a:Assignment)
+    WHERE elementId(a) = $assignment_id
+    OPTIONAL MATCH (a)-[:CONTAINS]->(q:Question)
+    WHERE elementId(q) = $question_id
+    WITH a, q
+    CALL apoc.do.when(
+      q IS NOT NULL,
+      'SET q.question = $question, q.score = $score RETURN q',
+      'CREATE (a)-[:CONTAINS]->(new_q:Question {question: $question, score: $score}) RETURN new_q',
+      {a: a, question: $question, score: $score}
+    ) YIELD value
+    SET a.topic = $topic
+    RETURN value.q AS question
     """
     graph.query(query, {
         "assignment_id": assignment_id,
         "question_id": question_id,
         "question": updated_question.question,
-        "score": updated_question.score
+        "score": updated_question.score,
+        "topic": updated_question.topic  # Update Assignment topic
     })
 
 def get_assignment_with_questions(assignment_id: str):

@@ -6,7 +6,7 @@ from models.models import AssignmentQuestion
 
 router = APIRouter()
 
-@router.get("/generate-assignment")
+@router.post("/generate-assignment")
 def generate_assignment(note_ids: list[str] = Body(...)):
 
     assignment_questions = []

@@ -98,14 +98,20 @@ def login_teacher(user: UserLogin):
 def login_student(user: UserLogin):
     query = """
     MATCH (s:Student {email: $email})
-    RETURN s
+    RETURN elementId(s) AS id, s.name AS name, s.school AS school, s.password AS password, s.email AS email
     """
     result = graph.query(query, {"email": user.email})
     if not result:
         raise HTTPException(status_code=400, detail="Student not found")
         
-    student = result[0]["s"]
+    student = result[0]
     if not pwd_context.verify(user.password, student["password"]):
         raise HTTPException(status_code=400, detail="Incorrect password")
         
-    return {"message": "Login successful"}
+    return {
+        "message": "Login successful",
+        "id": student["id"],
+        "name": student["name"],
+        "school": student["school"],
+        "email": student["email"]
+    }
