@@ -16,7 +16,7 @@ Before you begin, ensure you have the following:
 1. **Clone the repository:**
 
    ```bash
-   git clone [https://github.com/yourusername/your-repo-name.git](https://github.com/nphacks/easy-a-backend.git)
+   git clone https://github.com/nphacks/easy-a-backend.git
    cd your-repo-name
    ```
 
